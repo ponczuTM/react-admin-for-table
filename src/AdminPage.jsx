@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import './AdminPage.css'
+import './AdminPage.css';
+
 const AdminPage = () => {
     const [ports, setPorts] = useState([]); 
     const [loading, setLoading] = useState(true); 
@@ -24,7 +25,7 @@ const AdminPage = () => {
     }, []);
 
     return (
-        <div>
+        <div className="admin-container">
             <h1>PANEL ADMINA</h1>
             {loading ? (
                 <p>Ładowanie danych...</p> 
@@ -32,19 +33,25 @@ const AdminPage = () => {
                 <table>
                     <thead>
                         <tr>
-                            <th>Path</th>
-                            <th>Manufacturer</th>
-                            <th>Friendly Name</th>
+                            <th>Port</th>
+                            {ports.map((port, index) => (
+                                <th key={index}>{port.path}</th>
+                            ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {ports.map((port, index) => (
-                            <tr key={index}>
-                                <td>{port.path}</td>
-                                <td>{port.manufacturer}</td>
-                                <td>{port.friendlyName}</td>
-                            </tr>
-                        ))}
+                        <tr>
+                            <td>Struktura systemowa</td>
+                            {ports.map((port, index) => (
+                                <td key={index}>{port.manufacturer}</td>
+                            ))}
+                        </tr>
+                        <tr>
+                            <td>Nazwa</td>
+                            {ports.map((port, index) => (
+                                <td key={index}>{port.friendlyName}</td>
+                            ))}
+                        </tr>
                     </tbody>
                 </table>
             )}
