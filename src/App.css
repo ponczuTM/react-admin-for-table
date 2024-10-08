@@ -1,0 +1,41 @@
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 720px;
+  background-color: #004910; 
+}
+
+.row {
+  display: flex;
+  width: 3840px;
+  justify-content: center;
+}
+
+.seat {
+  width: 1910px;
+  height: 360px;
+  border: 2px solid rgb(0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 100px;
+  transition: background-color 0.3s;
+}
+
+.occupied {
+  background-color: #fdc00a; 
+  color: rgb(0, 0, 0);
+  font-weight: bold;
+}
+
+.flipped {
+  transform: rotate(180deg);
+}
