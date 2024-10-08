@@ -3,7 +3,7 @@ const cors = require('cors');
 const { SerialPort } = require('serialport');
 
 const app = express();
-const port = 3001;
+const port = 3000;
 
 let distanceArray_1 = [];
 let distanceArray_2 = [];
@@ -122,7 +122,6 @@ const updateSensorState = (sensor, distance) => {
                     distances[sensor].isSitTaken = true;
                 }
             }
-            // Sprawdzanie, czy tablica ma 2 lub mniej elementów i czy zawiera wartość 37
             if (controller_port_number == 1 && distanceArray_1.length <= 2 && distanceArray_1.includes(37)) {
                 distances[sensor].isSitTaken = false;
             }
