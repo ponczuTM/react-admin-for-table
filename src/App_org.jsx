@@ -10,7 +10,7 @@ const App = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/sensors/api');
+        const response = await axios.get('http://localhost:3000/sensors/api');
         setDistance(response.data.sensors[0].distance);
         setError(null); 
       } catch (err) {

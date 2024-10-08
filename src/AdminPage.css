@@ -39,7 +39,7 @@ table {
 }
 
 th, td {
-    border: 1px solid #fdc00a; 
+    border: 3px solid #fdc00a; 
     padding: 15px; 
     text-align: center; 
 }
@@ -47,14 +47,14 @@ th, td {
 th:first-child {
     background-color: #fdc00a; 
     color: black; 
-    border: 1px solid white; 
+    border: 3px solid white; 
 }
 
 td:first-child {
     background-color: #fdc00a; 
     color: black; 
     font-weight: bold; 
-    border: 1px solid white; 
+    border: 3px solid white; 
 }
 
 #port-select {
@@ -168,7 +168,8 @@ td:first-child {
 
 
 .chairs-btn, .calibrate-btn {
-    margin-top: 200px;
+    margin-top: 50px;
+    margin-bottom: 200px;
     padding: 10px 20px;
     font-size: 35px;
     cursor: pointer;

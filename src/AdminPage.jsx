@@ -5,8 +5,10 @@ const AdminPage = () => {
     const [ports, setPorts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedPort, setSelectedPort] = useState('');
-    const [isChairsPushedIn, setIsChairsPushedIn] = useState(false); 
+    const [isChairsPushedIn, setIsChairsPushedIn] = useState(false);
     const [sensorData, setSensorData] = useState(null); 
+    const [minDistance, setMinDistance] = useState(null); 
+    const [calibrated, setCalibrated] = useState(false); 
 
     const fetchPorts = async () => {
         try {
@@ -43,34 +45,25 @@ const AdminPage = () => {
     };
 
     const handleChairsPushedIn = () => {
-        setIsChairsPushedIn(true); 
+        setIsChairsPushedIn(true);
     };
 
     const handleCalibrate = async () => {
         try {
-            const response = await fetch('http://localhost:3001/sensors/api', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sensors: [
-                        { name: 'sensor_1', distance: 175, isSitTaken: false },
-                        { name: 'sensor_2', distance: 175, isSitTaken: false },
-                        { name: 'sensor_3', distance: 175, isSitTaken: false },
-                        { name: 'sensor_4', distance: 37, isSitTaken: true },
-                    ],
-                }),
-            });
-
+            const response = await fetch('http://localhost:3000/sensors/api');
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
-
             const data = await response.json();
-            setSensorData(data.sensors); 
+            setSensorData(data.sensors);
+
+            const distances = data.sensors.map(sensor => sensor.distance);
+            const min = Math.min(...distances);
+            setMinDistance(min); 
+
+            setCalibrated(true);
         } catch (error) {
-            console.error('Error calibrating sensors:', error);
+            console.error('Error fetching sensor data:', error);
         }
     };
 
@@ -117,7 +110,7 @@ const AdminPage = () => {
                         ))}
                     </select>
 
-                    <h1 style={{ marginTop: "100px", zIndex: "999" }}>ZASUŃ KRZESŁA</h1>
+                    <h1 style={{ marginTop: "100px", zIndex: "999"}}>ZASUŃ KRZESŁA</h1>
                     <div className="table">
                         <div className="chair top-left"></div>
                         <div className="chair top-right"></div>
@@ -125,26 +118,23 @@ const AdminPage = () => {
                         <div className="chair bottom-right"></div>
                         <div className="coverTable"></div>
                     </div>
-
+                        <div style={{ marginTop: "100px" }}></div>
                     {!isChairsPushedIn ? (
                         <button className="chairs-btn" onClick={handleChairsPushedIn}>
                             Krzesła zostały zasunięte
                         </button>
                     ) : (
-                        <button className="calibrate-btn" onClick={handleCalibrate}>
-                            Kalibruj
-                        </button>
-                    )}
-
-                    {}
-                    {sensorData && (
-                        <div className="sensor-data" style={{ marginTop: "20px" }}>
-                            {sensorData.map(sensor => (
-                                <p key={sensor.name}>
-                                    WYKRYTY DYSTANS {sensor.name.toUpperCase()}: {sensor.distance}
-                                </p>
-                            ))}
-                        </div>
+                        <>
+                            {calibrated ? ( 
+                                <div style={{ marginTop: '20px', fontSize: '20px', fontWeight: 'bold' }}>
+                                    Najmniejszy dystans: {minDistance}
+                                </div>
+                            ) : (
+                                <button className="calibrate-btn" onClick={handleCalibrate}>
+                                    Kalibruj
+                                </button>
+                            )}
+                        </>
                     )}
                 </>
             )}

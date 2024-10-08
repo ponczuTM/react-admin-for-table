@@ -8,7 +8,7 @@ const App = () => {
 
     const fetchSensors = async () => {
         try {
-            const response = await fetch('http://localhost:3001/sensors/api');
+            const response = await fetch('http://localhost:3000/sensors/api');
             const data = await response.json();
             setSensors(data.sensors);
         } catch (error) {
