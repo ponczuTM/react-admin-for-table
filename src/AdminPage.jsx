@@ -6,10 +6,11 @@ const AdminPage = () => {
     const [loading, setLoading] = useState(true);
     const [selectedPort, setSelectedPort] = useState('');
     const [isChairsPushedIn, setIsChairsPushedIn] = useState(false);
-    const [sensorData, setSensorData] = useState(null); 
-    const [minDistance, setMinDistance] = useState(null); 
-    const [calibrated, setCalibrated] = useState(false); 
+    const [sensorData, setSensorData] = useState(null);
+    const [minDistance, setMinDistance] = useState(null);
+    const [calibrated, setCalibrated] = useState(false);
     const [showChairsSection, setShowChairsSection] = useState(false);
+    const [showCalibrateButton, setShowCalibrateButton] = useState(false);
 
     const fetchPorts = async () => {
         try {
@@ -47,6 +48,7 @@ const AdminPage = () => {
 
     const handleChairsPushedIn = () => {
         setIsChairsPushedIn(true);
+        setShowCalibrateButton(true);
     };
 
     const handleCalibrate = async () => {
@@ -57,20 +59,20 @@ const AdminPage = () => {
             }
             const data = await response.json();
             setSensorData(data.sensors);
-    
+
             const distances = data.sensors.map(sensor => sensor.distance);
             const min = Math.min(...distances);
-            setMinDistance(min); 
-    
+            setMinDistance(min);
+
             setCalibrated(true);
-            
+
             await sendCalibrationData(min, selectedPort);
-            setShowChairsSection(true);
+
         } catch (error) {
             console.error('Error fetching sensor data:', error);
         }
     };
-    
+
     const sendCalibrationData = async (minDistance, selectedPort) => {
         try {
             const response = await fetch('http://localhost:3000/calibration', {
@@ -91,7 +93,6 @@ const AdminPage = () => {
             console.error('Error sending calibration data:', error);
         }
     };
-    
 
     return (
         <div className="admin-container">
@@ -135,42 +136,50 @@ const AdminPage = () => {
                             </option>
                         ))}
                     </select>
-                        <button className="calibrate-btn" onClick={handleCalibrate}>
-                            Dalej
-                        </button>
+                    <button className="calibrate-btn" onClick={() => {
+                        setShowChairsSection(true);
+                        handleCalibrate();
+                    }}>
+                        Dalej
+                    </button>
 
+
+                    { }
                     {showChairsSection && (
-                    <>
-                    <h1 style={{ marginTop: "100px", zIndex: "999"}}>ZASUŃ KRZESŁA</h1>
-                    <div className="table">
-                        <div className="chair top-left"></div>
-                        <div className="chair top-right"></div>
-                        <div className="chair bottom-left"></div>
-                        <div className="chair bottom-right"></div>
-                        <div className="coverTable"></div>
-                    </div>
-                        <div style={{ marginTop: "100px" }}></div>
-                    {!isChairsPushedIn ? (
-                        <button className="chairs-btn" onClick={handleChairsPushedIn}>
-                            Krzesła zostały zasunięte
-                        </button>
-                    ) : (
                         <>
-                            {calibrated ? ( 
-                                <div style={{ marginTop: '20px', fontSize: '20px', fontWeight: 'bold' }}>
-                                    Najmniejszy dystans: {minDistance}
-                                </div>
-                            ) : (
-                                <button className="calibrate-btn" onClick={handleCalibrate}>
-                                    Kalibruj
+                            <h1 style={{ marginTop: "100px", zIndex: "999" }}>ZASUŃ KRZESŁA</h1>
+                            <div className="table">
+                                <div className="chair top-left"></div>
+                                <div className="chair top-right"></div>
+                                <div className="chair bottom-left"></div>
+                                <div className="chair bottom-right"></div>
+                                <div className="coverTable"></div>
+                            </div>
+                            <div style={{ marginTop: "100px" }}></div>
+                            {!isChairsPushedIn ? (
+                                <button className="chairs-btn" onClick={handleChairsPushedIn}>
+                                    Krzesła zostały zasunięte
                                 </button>
+                            ) : (
+                                <>
+                                    { }
+                                    {showCalibrateButton && (
+                                        <button className="calibrate-btn" onClick={handleCalibrate}>
+                                            Kalibruj
+                                        </button>
+                                    )}
+
+                                    { }
+                                    {calibrated && (
+                                        <div style={{ marginTop: '20px', fontSize: '20px', fontWeight: 'bold' }}>
+                                            Najmniejszy dystans: {minDistance}
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </>
                     )}
-                    </>
-                    )}
                 </>
-                
             )}
         </div>
     );
