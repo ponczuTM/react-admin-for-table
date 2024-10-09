@@ -1,11 +1,7 @@
-// const express = require('express');
-// const cors = require('cors');
-// const { SerialPort } = require('serialport');
-
 import express from 'express';
 import cors from 'cors';
 import { SerialPort } from 'serialport';
-
+ 
 const app = express();
 const port = 3000;
 let changeTimer = null;
@@ -13,10 +9,10 @@ let distanceArray_1 = [];
 let distanceArray_2 = [];
 let distanceArray_3 = [];
 let distanceArray_4 = [];
-
+ 
 app.use(cors());
 app.use(express.json());
-
+ 
 let controller_port_number = 0;
 let buffer = '';
 let distances = {
@@ -25,18 +21,18 @@ let distances = {
     sensor_3: { distance: 175, isSitTaken: false },
     sensor_4: { distance: 175, isSitTaken: false },
 };
-
+ 
 let changesCount = 0;
 let timerRunning = false;
-
+ 
 let portName = '';
 const baudRate = 115200;
 let serialPort; 
-
+ 
 const formatData = (data) => {
     return data.split('').map(char => `[${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}]`).join('');
 };
-
+ 
 const processData = (data) => {
     const distanceMapping = {
         "[Dz=AB]": 5, // 0-10 cm
@@ -49,9 +45,9 @@ const processData = (data) => {
         "[Dz=07]": 160, // 150-170 cm
         "[Dz=XX]": 175, // 170+ cm
     };
-
+ 
     const distance = distanceMapping[data] || 0;
-
+ 
     if (controller_port_number === 1) {
         updateSensorState('sensor_1', distance);
     }
@@ -64,7 +60,7 @@ const processData = (data) => {
     if (controller_port_number === 4) {
         updateSensorState('sensor_4', distance);
     }
-
+ 
     if (!timerRunning) {
         changesCount = 0;
         timerRunning = true;
@@ -86,10 +82,10 @@ const processData = (data) => {
             distanceArray_4 = [];
         }, 3000);
     }
-
+ 
     changesCount++;
 };
-
+ 
 const updateSensorState = (sensor, distance) => {
     distances[sensor].distance = distance;
     console.log("Distance: ", distance);
@@ -112,7 +108,7 @@ const updateSensorState = (sensor, distance) => {
         }, 4000);
     }
 };
-
+ 
 const startSerialPort = () => {
     serialPort = new SerialPort({
         path: portName,
@@ -122,10 +118,10 @@ const startSerialPort = () => {
         stopBits: 1,
         flowControl: false,
     });
-
+ 
     serialPort.on('data', (data) => {
         buffer += data.toString();
-
+ 
         if (buffer.includes('\r\n')) {
             const data = buffer;
             const formattedRawData = formatData(data);
@@ -141,28 +137,28 @@ const startSerialPort = () => {
             } else {
                 console.log('No port ID found');
             }
-
+ 
             let startIdx = buffer.indexOf('[Dz=');
             let endIdx = buffer.indexOf(']');
-
+ 
             if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
                 const fullPacket = buffer.substring(startIdx, endIdx + 1);
                 processData(fullPacket);
             }
-
+ 
             buffer = '';
         }
     });
-
+ 
     serialPort.on('error', (err) => {
         console.error('Error:', err.message);
     });
-
+ 
     serialPort.on('open', () => {
         console.log('Serial Port Opened');
     });
 };
-
+ 
 app.get('/sensors/api', (req, res) => {
     res.json({
         sensors: [
@@ -173,17 +169,17 @@ app.get('/sensors/api', (req, res) => {
         ]
     });
 });
-
+ 
 app.post('/calibration', (req, res) => {
     const { minDistance, port } = req.body;
     console.log(`Received calibration data - Minimum Distance: ${minDistance}, Selected Port: ${port}`);
     portName = port; 
-
+ 
     startSerialPort();
-
+ 
     res.status(200).send('Calibration data received successfully');
 });
-
+ 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
