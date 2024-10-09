@@ -163,10 +163,6 @@ td:first-child {
     left: 0px; 
 }
 
-
-
-
-
 .chairs-btn, .calibrate-btn {
     margin-top: 50px;
     margin-bottom: 200px;
@@ -178,12 +174,12 @@ td:first-child {
 }
 
 .chairs-btn {
-    background-color: var(--bg-color); /* green */
+    background-color: var(--bg-color); 
     color: white;
 }
 
 .calibrate-btn {
-    background-color: var(--second-color); /* orange */
+    background-color: var(--second-color); 
     border: 5px solid black;
     color:black;
 }

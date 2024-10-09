@@ -4,7 +4,9 @@ import cors from 'cors';
 const app = express();
 const PORT = 3000;
 
+app.use(express.json());
 app.use(cors());
+
 
 const sensorData = {
     sensors: [
@@ -33,6 +35,12 @@ const sensorData = {
 
 app.get('/sensors/api', (req, res) => {
     res.json(sensorData);
+});
+
+app.post('/calibration', (req, res) => {
+    const { minDistance, port } = req.body;
+    console.log(`Received calibration data - Minimum Distance: ${minDistance}, Selected Port: ${port}`);
+    res.status(200).send('Calibration data received successfully');
 });
 
 app.listen(PORT, () => {

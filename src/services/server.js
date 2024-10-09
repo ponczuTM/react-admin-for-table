@@ -1,6 +1,6 @@
-const express = require('express');
-const cors = require('cors');
-const { SerialPort } = require('serialport');
+import express from 'express';
+import cors from 'cors';
+import { SerialPort } from 'serialport';
 
 const app = express();
 const port = 3000;
@@ -26,17 +26,8 @@ let changesCount = 0;
 let timerRunning = false;
 let changeTimer = null;
 
-const portName = 'COM7'; 
 const baudRate = 115200;
-
-const serialPort = new SerialPort({
-    path: portName,
-    baudRate: baudRate,
-    dataBits: 8,
-    parity: 'none',
-    stopBits: 1,
-    flowControl: false,
-});
+let serialPort = null; 
 
 const formatData = (data) => {
     return data.split('').map(char => `[${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}]`).join('');
@@ -52,7 +43,7 @@ const processData = (data) => {
         "[Dz=05]": 112, // 100-125 cm
         "[Dz=06]": 137, // 125-150 cm
         "[Dz=07]": 160, // 150-170 cm
-        "[Dz=XX]": 175, // 170+ cm 
+        "[Dz=XX]": 175, // 170+ cm
     };
 
     const distance = distanceMapping[data] || 0;
@@ -77,23 +68,24 @@ const processData = (data) => {
             console.log(`Liczba zmian wykrytych w ciągu 2 sekundy: ${changesCount}`);
             timerRunning = false;
             changesCount = 0;
-			console.log(distanceArray_1);
-			console.log("SIZE: ", distanceArray_1.length);
-			distanceArray_1 = [];
-			console.log(distanceArray_2);
-			console.log("SIZE: ", distanceArray_2.length);
-			distanceArray_2 = [];
-			console.log(distanceArray_3);
-			console.log("SIZE: ", distanceArray_3.length);
-			distanceArray_3 = [];
-			console.log(distanceArray_4);
-			console.log("SIZE: ", distanceArray_4.length);
-			distanceArray_4 = [];
+            console.log(distanceArray_1);
+            console.log("SIZE: ", distanceArray_1.length);
+            distanceArray_1 = [];
+            console.log(distanceArray_2);
+            console.log("SIZE: ", distanceArray_2.length);
+            distanceArray_2 = [];
+            console.log(distanceArray_3);
+            console.log("SIZE: ", distanceArray_3.length);
+            distanceArray_3 = [];
+            console.log(distanceArray_4);
+            console.log("SIZE: ", distanceArray_4.length);
+            distanceArray_4 = [];
         }, 3000);
     }
 
     changesCount++;
 };
+
 const updateSensorState = (sensor, distance) => {
     distances[sensor].distance = distance;
     console.log("Distance: ", distance);
@@ -144,40 +136,78 @@ const updateSensorState = (sensor, distance) => {
     }
 };
 
+function openSerialPort(portName) {
+    return new Promise((resolve, reject) => {
+        serialPort = new SerialPort({
+            path: portName,
+            baudRate: baudRate,
+            dataBits: 8,
+            parity: 'none',
+            stopBits: 1,
+            flowControl: false,
+        });
 
-serialPort.on('data', (data) => {
-    buffer += data.toString(); 
+        serialPort.on('open', () => {
+            console.log(`Serial port ${portName} opened`);
+            resolve();
+        });
 
-    if (buffer.includes('\r\n')) {
-        const data = buffer;  
-        const formattedRawData = formatData(data);
-		console.log(data);
-		console.log(formattedRawData);
-        const dataArray = formattedRawData.match(/\[([A-Fa-f0-9]{2})\]/g);
-        if (dataArray && dataArray.length >= 4) {
-            const port_id = dataArray?.[3]?.slice(1, -1);
-            if (port_id === "31") controller_port_number = 1;
-            if (port_id === "32") controller_port_number = 2;
-            if (port_id === "33") controller_port_number = 3;
-            if (port_id === "34") controller_port_number = 4;
-        } else {
-            console.log('No port ID found');
-        }
+        serialPort.on('error', (err) => {
+            console.error('Error:', err.message);
+            reject(err);
+        });
+    });
+}
 
-        let startIdx = buffer.indexOf('[Dz=');
-        let endIdx = buffer.indexOf(']');
+app.post('/initialize', async (req, res) => {
+    const { portName } = req.body;
 
-        if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
-            const fullPacket = buffer.substring(startIdx, endIdx + 1);
-            processData(fullPacket);
-        }
-
-        buffer = '';
+    if (!portName) {
+        return res.status(400).send('Port name is required');
     }
-});
 
-serialPort.on('error', (err) => {
-    console.error('Error:', err.message);
+    if (serialPort) {
+        return res.status(400).send('Serial port is already initialized');
+    }
+
+    try {
+        await openSerialPort(portName);
+
+        serialPort.on('data', (data) => {
+            buffer += data.toString(); 
+
+            if (buffer.includes('\r\n')) {
+                const data = buffer;  
+                const formattedRawData = formatData(data);
+                console.log(data);
+                console.log(formattedRawData);
+                const dataArray = formattedRawData.match(/\[([A-Fa-f0-9]{2})\]/g);
+                if (dataArray && dataArray.length >= 4) {
+                    const port_id = dataArray?.[3]?.slice(1, -1);
+                    if (port_id === "31") controller_port_number = 1;
+                    if (port_id === "32") controller_port_number = 2;
+                    if (port_id === "33") controller_port_number = 3;
+                    if (port_id === "34") controller_port_number = 4;
+                } else {
+                    console.log('No port ID found');
+                }
+
+                let startIdx = buffer.indexOf('[Dz=');
+                let endIdx = buffer.indexOf(']');
+
+                if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+                    const fullPacket = buffer.substring(startIdx, endIdx + 1);
+                    processData(fullPacket);
+                }
+
+                buffer = '';
+            }
+        });
+
+        res.status(200).send('Serial port initialized successfully');
+    } catch (err) {
+        res.status(500).send('Error initializing serial port: ' + err.message);
+    }
 });
 
 app.get('/sensors/api', (req, res) => {
@@ -191,5 +221,12 @@ app.get('/sensors/api', (req, res) => {
     });
 });
 
-serialPort.on('open', () => {});
-app.listen(port, () => {});
+app.post('/calibration', (req, res) => {
+    const { minDistance, port } = req.body;
+    console.log(`Received calibration data - Minimum Distance: ${minDistance}, Selected Port: ${port}`);
+    res.status(200).send('Calibration data received successfully');
+});
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});

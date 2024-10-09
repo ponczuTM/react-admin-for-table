@@ -9,6 +9,7 @@ const AdminPage = () => {
     const [sensorData, setSensorData] = useState(null); 
     const [minDistance, setMinDistance] = useState(null); 
     const [calibrated, setCalibrated] = useState(false); 
+    const [showChairsSection, setShowChairsSection] = useState(false);
 
     const fetchPorts = async () => {
         try {
@@ -56,16 +57,41 @@ const AdminPage = () => {
             }
             const data = await response.json();
             setSensorData(data.sensors);
-
+    
             const distances = data.sensors.map(sensor => sensor.distance);
             const min = Math.min(...distances);
             setMinDistance(min); 
-
+    
             setCalibrated(true);
+            
+            await sendCalibrationData(min, selectedPort);
+            setShowChairsSection(true);
         } catch (error) {
             console.error('Error fetching sensor data:', error);
         }
     };
+    
+    const sendCalibrationData = async (minDistance, selectedPort) => {
+        try {
+            const response = await fetch('http://localhost:3000/calibration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    minDistance,
+                    port: selectedPort,
+                }),
+            });
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            console.log('Calibration data sent successfully');
+        } catch (error) {
+            console.error('Error sending calibration data:', error);
+        }
+    };
+    
 
     return (
         <div className="admin-container">
@@ -109,7 +135,12 @@ const AdminPage = () => {
                             </option>
                         ))}
                     </select>
+                        <button className="calibrate-btn" onClick={handleCalibrate}>
+                            Dalej
+                        </button>
 
+                    {showChairsSection && (
+                    <>
                     <h1 style={{ marginTop: "100px", zIndex: "999"}}>ZASUŃ KRZESŁA</h1>
                     <div className="table">
                         <div className="chair top-left"></div>
@@ -136,7 +167,10 @@ const AdminPage = () => {
                             )}
                         </>
                     )}
+                    </>
+                    )}
                 </>
+                
             )}
         </div>
     );
