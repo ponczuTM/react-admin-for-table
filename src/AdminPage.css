@@ -183,3 +183,18 @@ td:first-child {
     border: 5px solid black;
     color:black;
 }
+
+.arrow {
+    font-size: 30px;
+    text-align: center;
+    margin-top: -150px;
+}
+
+@keyframes moveArrow {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-30px);
+    }
+}
