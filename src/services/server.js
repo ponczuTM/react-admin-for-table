@@ -1,7 +1,10 @@
+// const express = require('express');
+// const cors = require('cors');
+// const { SerialPort } = require('serialport');
+
 import express from 'express';
 import cors from 'cors';
 import { SerialPort } from 'serialport';
-import WebSocket from 'ws';  // Import WebSocket library
 
 const app = express();
 const port = 3000;
@@ -30,24 +33,21 @@ let portName = '';
 const baudRate = 115200;
 let serialPort; 
 
-const wss = new WebSocket.Server({ noServer }); // Create WebSocket Server
-let clients = new Set(); // Keep track of connected clients
-
 const formatData = (data) => {
     return data.split('').map(char => `[${char.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0')}]`).join('');
 };
 
 const processData = (data) => {
     const distanceMapping = {
-        "[Dz=AB]": 5,
-        "[Dz=01]": 17,
-        "[Dz=02]": 37,
-        "[Dz=03]": 62,
-        "[Dz=04]": 87,
-        "[Dz=05]": 112,
-        "[Dz=06]": 137,
-        "[Dz=07]": 160,
-        "[Dz=XX]": 175,
+        "[Dz=AB]": 5, // 0-10 cm
+        "[Dz=01]": 17, // 10-25 cm
+        "[Dz=02]": 37, // 25-50 cm
+        "[Dz=03]": 62, // 50-75 cm
+        "[Dz=04]": 87, // 75-100 cm
+        "[Dz=05]": 112, // 100-125 cm
+        "[Dz=06]": 137, // 125-150 cm
+        "[Dz=07]": 160, // 150-170 cm
+        "[Dz=XX]": 175, // 170+ cm
     };
 
     const distance = distanceMapping[data] || 0;
@@ -91,7 +91,6 @@ const processData = (data) => {
 };
 
 const updateSensorState = (sensor, distance) => {
-    const previousState = distances[sensor].isSitTaken; // Store previous state
     distances[sensor].distance = distance;
     console.log("Distance: ", distance);
     clearTimeout(distances[sensor].timeout);
@@ -99,37 +98,19 @@ const updateSensorState = (sensor, distance) => {
     if (controller_port_number == 2) distanceArray_2.push(distance);
     if (controller_port_number == 3) distanceArray_3.push(distance);
     if (controller_port_number == 4) distanceArray_4.push(distance);
-
     if (distance < 40) {
         distances[sensor].timeout = setTimeout(() => {
             if (distances[sensor].distance < 40) {
-                distances[sensor].isSitTaken = true;
-                notifyClients(); // Notify clients when flag changes
+				distances[sensor].isSitTaken = true;
             }
         }, 2000);
     } else {
         distances[sensor].timeout = setTimeout(() => {
             if (distances[sensor].distance > 40) {
                 distances[sensor].isSitTaken = false;
-                notifyClients(); // Notify clients when flag changes
             }
         }, 4000);
     }
-
-    // Notify only if the state has changed
-    if (distances[sensor].isSitTaken !== previousState) {
-        notifyClients(); // Send state to all connected clients
-    }
-};
-
-const notifyClients = () => {
-    const allSitTaken = Object.values(distances).every(sensor => sensor.isSitTaken);
-    const message = JSON.stringify({ playAds: !allSitTaken });
-    clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(message);
-        }
-    });
 };
 
 const startSerialPort = () => {
@@ -182,20 +163,6 @@ const startSerialPort = () => {
     });
 };
 
-const server = app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
-
-// Upgrade server to handle WebSocket connections
-server.on('upgrade', (request, socket, head) => {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-        clients.add(ws); // Add new client to the set
-        ws.on('close', () => {
-            clients.delete(ws); // Remove client from the set on disconnect
-        });
-    });
-});
-
 app.get('/sensors/api', (req, res) => {
     res.json({
         sensors: [
@@ -215,4 +182,8 @@ app.post('/calibration', (req, res) => {
     startSerialPort();
 
     res.status(200).send('Calibration data received successfully');
+});
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
