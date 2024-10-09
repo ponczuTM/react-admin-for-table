@@ -1,10 +1,14 @@
-const express = require('express');
-const cors = require('cors');
-const { SerialPort } = require('serialport');
+// const express = require('express');
+// const cors = require('cors');
+// const { SerialPort } = require('serialport');
+
+import express from 'express';
+import cors from 'cors';
+import { SerialPort } from 'serialport';
 
 const app = express();
 const port = 3000;
-
+let changeTimer = null;
 let distanceArray_1 = [];
 let distanceArray_2 = [];
 let distanceArray_3 = [];
